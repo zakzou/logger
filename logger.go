@@ -40,7 +40,7 @@ func NewLogger(filename string, level int, caller int) *Logger {
 	logger := new(Logger)
 	logger.level = level
 	logger.log = log.New(output, "", log.Ldate|log.Ltime)
-	Logger.caller = caller
+	logger.caller = caller
 	return logger
 }
 
