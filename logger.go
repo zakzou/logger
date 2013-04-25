@@ -17,8 +17,9 @@ const (
 )
 
 type Logger struct {
-	log   *log.Logger
-	level int
+	log    *log.Logger
+	level  int
+	caller int
 }
 
 func checkErr(err error) {
@@ -27,7 +28,7 @@ func checkErr(err error) {
 	}
 }
 
-func NewLogger(filename string, level int) *Logger {
+func NewLogger(filename string, level int, caller int) *Logger {
 	var output *os.File
 	var err error
 	if filename == "" {
@@ -39,6 +40,7 @@ func NewLogger(filename string, level int) *Logger {
 	logger := new(Logger)
 	logger.level = level
 	logger.log = log.New(output, "", log.Ldate|log.Ltime)
+	Logger.caller = caller
 	return logger
 }
 
@@ -52,7 +54,7 @@ func (logger *Logger) GetLevel() int {
 
 func (logger *Logger) print(level int, prefix string, v ...interface{}) {
 	if logger.level <= level {
-		_, filepath, line, _ := runtime.Caller(2)
+		_, filepath, line, _ := runtime.Caller(logger.caller)
 		filename := path.Base(filepath)
 		fileinfo := fmt.Sprintf("file: %s, line: %d ", filename, line)
 		errorinfo := fmt.Sprint(v...)
