@@ -17,9 +17,10 @@ const (
 )
 
 type Logger struct {
-	log    *log.Logger
-	level  int
-	caller int
+	log      *log.Logger
+	filename string
+	level    int
+	caller   int
 }
 
 func checkErr(err error) {
@@ -39,8 +40,9 @@ func NewLogger(filename string, level int, caller int) *Logger {
 	}
 	logger := new(Logger)
 	logger.level = level
-	logger.log = log.New(output, "", log.Ldate|log.Ltime)
+	logger.log = log.New(output, "", log.Ldate|log.Ltime|log.Lmicroseconds)
 	logger.caller = caller
+	logger.filename = filename
 	return logger
 }
 
@@ -52,11 +54,30 @@ func (logger *Logger) GetLevel() int {
 	return logger.level
 }
 
+func (logger *Logger) SetCaller(caller int) {
+	logger.caller = caller
+}
+
+func (logger *Logger) GetCaller() int {
+	return logger.caller
+}
+
+func (logger *Logger) reset() {
+	if logger.filename != "" {
+		if _, err := os.Stat(logger.filename); os.IsNotExist(err) {
+			output, err := os.OpenFile(logger.filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+			checkErr(err)
+			logger.log = log.New(output, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+		}
+	}
+}
+
 func (logger *Logger) print(level int, prefix string, v ...interface{}) {
 	if logger.level <= level {
+		logger.reset()
 		_, filepath, line, _ := runtime.Caller(logger.caller)
 		filename := path.Base(filepath)
-		fileinfo := fmt.Sprintf("file: %s, line: %d ", filename, line)
+		fileinfo := fmt.Sprintf("%s: %d ", filename, line)
 		errorinfo := fmt.Sprint(v...)
 		logger.log.Println(prefix, fileinfo, errorinfo)
 	}
